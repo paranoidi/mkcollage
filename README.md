@@ -94,7 +94,8 @@ mkcollage /path/to/images output.jpg \
 - `--width` - Width of the output collage (overrides --size and auto aspect ratio)
 - `--height` - Height of the output collage (overrides --size and auto aspect ratio)
 - `--padding` - Padding between images in pixels (default: 5)
-- `--centered` - Center the grid if canvas is not square
+- `--columns` - Number of images per row. If not specified, automatically calculates a square-ish grid. Useful for many images to keep them larger and make the collage taller.
+- `--max-rows` - Maximum number of rows. If there are too many images to fit, a sample will be created that always includes the first and last images. A "Sample N of M" label will be shown in the top-right corner.
 - `--background` - Background color in hex format (default: #000000)
 - `--quality` - JPEG quality (1-100, default: 80)
 - `--title` - Title text to add to top-left corner (optional)
