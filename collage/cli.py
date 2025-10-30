@@ -169,7 +169,79 @@ def get_image_files(folder_path):
     return image_files
 
 
-def main():
+def determine_output_path(output_arg, folder_path):
+    """
+    Determine the output file path based on user input.
+    
+    Args:
+        output_arg: Output argument from command line (can be None)
+        folder_path: Path to the folder containing images
+        
+    Returns:
+        str: Full output file path
+    """
+    if output_arg is None:
+        # Use the last directory name from folder path as output filename
+        folder_path = Path(folder_path).resolve()
+        output_name = folder_path.name + '.jpg'
+        output_path = Path.cwd() / output_name
+        print(f"No output specified, using: {output_path}")
+    else:
+        output_path = Path(output_arg)
+        # If output has no directory component, use current directory
+        if output_path.parent == Path('.'):
+            output_path = Path.cwd() / output_path.name
+        # Ensure .jpg extension if no extension provided
+        if not output_path.suffix:
+            output_path = output_path.with_suffix('.jpg')
+    
+    return str(output_path)
+
+
+def calculate_canvas_dimensions(aspect_ratio, size=None, width=None, height=None):
+    """
+    Calculate canvas dimensions based on aspect ratio and user preferences.
+    
+    Args:
+        aspect_ratio: The aspect ratio to use (width/height)
+        size: Target size for the larger dimension
+        width: Explicit width (overrides size)
+        height: Explicit height (overrides size)
+        
+    Returns:
+        tuple: (canvas_width, canvas_height)
+    """
+    if width and height:
+        # Both dimensions specified
+        canvas_width, canvas_height = width, height
+        print(f"Using specified dimensions: {canvas_width}x{canvas_height}")
+    elif width:
+        # Only width specified
+        canvas_width = width
+        canvas_height = int(canvas_width / aspect_ratio)
+        print(f"Calculated dimensions from width: {canvas_width}x{canvas_height}")
+    elif height:
+        # Only height specified
+        canvas_height = height
+        canvas_width = int(canvas_height * aspect_ratio)
+        print(f"Calculated dimensions from height: {canvas_width}x{canvas_height}")
+    else:
+        # Use aspect ratio with target size
+        if aspect_ratio >= 1:
+            # Landscape or square - size is width
+            canvas_width = size
+            canvas_height = int(canvas_width / aspect_ratio)
+        else:
+            # Portrait - size is height
+            canvas_height = size
+            canvas_width = int(canvas_height * aspect_ratio)
+        print(f"Auto-calculated dimensions: {canvas_width}x{canvas_height}")
+    
+    return canvas_width, canvas_height
+
+
+def parse_arguments():
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser(
         description='Create a grid collage from images in a folder.'
     )
@@ -181,7 +253,9 @@ def main():
     parser.add_argument(
         'output',
         type=str,
-        help='Output filename (with path)'
+        nargs='?',
+        default=None,
+        help='Output filename (optional, defaults to folder name). If no path is given, saves to current directory.'
     )
     parser.add_argument(
         '--size',
@@ -218,8 +292,19 @@ def main():
         default='#000000',
         help='Background color in hex format (default: #000000)'
     )
+    parser.add_argument(
+        '--quality',
+        type=int,
+        default=80,
+        help='JPEG quality (1-100, default: 80)'
+    )
     
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main():
+    """Main entry point for the collage CLI."""
+    args = parse_arguments()
     
     # Get image files from folder
     image_files = get_image_files(args.folder)
@@ -230,35 +315,19 @@ def main():
     
     print(f"Found {len(image_files)} images in '{args.folder}'")
     
+    # Determine output path
+    output_file = determine_output_path(args.output, args.folder)
+    
     # Determine the most common aspect ratio
     width_ratio, height_ratio, aspect_ratio = determine_common_aspect_ratio(image_files)
     
     # Calculate canvas dimensions
-    if args.width and args.height:
-        # Both dimensions specified
-        canvas_width, canvas_height = args.width, args.height
-        print(f"Using specified dimensions: {canvas_width}x{canvas_height}")
-    elif args.width:
-        # Only width specified
-        canvas_width = args.width
-        canvas_height = int(canvas_width / aspect_ratio)
-        print(f"Calculated dimensions from width: {canvas_width}x{canvas_height}")
-    elif args.height:
-        # Only height specified
-        canvas_height = args.height
-        canvas_width = int(canvas_height * aspect_ratio)
-        print(f"Calculated dimensions from height: {canvas_width}x{canvas_height}")
-    else:
-        # Use aspect ratio with target size
-        if aspect_ratio >= 1:
-            # Landscape or square - size is width
-            canvas_width = args.size
-            canvas_height = int(canvas_width / aspect_ratio)
-        else:
-            # Portrait - size is height
-            canvas_height = args.size
-            canvas_width = int(canvas_height * aspect_ratio)
-        print(f"Auto-calculated dimensions: {canvas_width}x{canvas_height}")
+    canvas_width, canvas_height = calculate_canvas_dimensions(
+        aspect_ratio,
+        size=args.size,
+        width=args.width,
+        height=args.height
+    )
     
     # Create blank canvas
     collage = Image.new("RGB", (canvas_width, canvas_height), args.background)
@@ -268,11 +337,10 @@ def main():
     collage = grid_collage(image_files, collage, args.padding, args.centered, args.background)
     
     # Save the collage
-    output_path = Path(args.output)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    collage.save(args.output)
+    Path(output_file).parent.mkdir(parents=True, exist_ok=True)
+    collage.save(output_file, quality=args.quality, optimize=True)
     
-    print(f"Collage saved to: {args.output}")
+    print(f"Collage saved to: {output_file}")
 
 
 if __name__ == "__main__":
