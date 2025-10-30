@@ -1,4 +1,4 @@
-# Collage
+# MkCollage
 
 A simple command-line tool for creating grid collages from a folder of images. Automatically determines the most common aspect ratio from your images and preserves all original image content without cropping.
 
@@ -7,13 +7,7 @@ A simple command-line tool for creating grid collages from a folder of images. A
 Install using `uv`:
 
 ```bash
-uv pip install .
-```
-
-Or for development:
-
-```bash
-uv pip install -e .
+uv sync
 ```
 
 ## Usage
@@ -21,41 +15,69 @@ uv pip install -e .
 Basic usage (auto-detects aspect ratio, outputs to current directory with folder name):
 
 ```bash
-collage /path/to/images
+mkcollage /path/to/images
 # Creates: ./images.jpg
 ```
 
 Specify output filename:
 
 ```bash
-collage /path/to/images mycollage
+mkcollage /path/to/images mycollage
 # Creates: ./mycollage.jpg (in current directory)
 ```
 
 Specify full output path:
 
 ```bash
-collage /path/to/images /output/path/collage.jpg
+mkcollage /path/to/images /output/path/collage.jpg
 # Creates: /output/path/collage.jpg
 ```
 
 With custom options:
 
 ```bash
-collage /path/to/images output.jpg \
+mkcollage /path/to/images output.jpg \
   --size 2560 \
   --padding 20 \
   --centered \
   --background "#000000" \
-  --quality 95
+  --quality 80
 ```
 
 Specify exact dimensions:
 
 ```bash
-collage /path/to/images output.jpg \
+mkcollage /path/to/images output.jpg \
   --width 1920 \
   --height 1080
+```
+
+Add a title to the collage:
+
+```bash
+mkcollage /path/to/images output.jpg \
+  --title "My Photo Collection" \
+  --title-size 64 \
+  --title-color "#FFFFFF" \
+  --title-border 3 \
+  --title-border-color "#000000"
+```
+
+Use custom font for title:
+
+```bash
+mkcollage /path/to/images output.jpg \
+  --title "Vacation 2025" \
+  --title-font /path/to/font.ttf \
+  --title-size 72
+```
+
+Reserve space for title (instead of drawing over collage):
+
+```bash
+mkcollage /path/to/images output.jpg \
+  --title "My Collection" \
+  --title-margin
 ```
 
 ### Command-line Options
@@ -65,10 +87,17 @@ collage /path/to/images output.jpg \
 - `--size` - Target size for the larger dimension of the collage (default: 1920)
 - `--width` - Width of the output collage (overrides --size and auto aspect ratio)
 - `--height` - Height of the output collage (overrides --size and auto aspect ratio)
-- `--padding` - Padding between images in pixels (default: 10)
+- `--padding` - Padding between images in pixels (default: 5)
 - `--centered` - Center the grid if canvas is not square
 - `--background` - Background color in hex format (default: #000000)
 - `--quality` - JPEG quality (1-100, default: 80)
+- `--title` - Title text to add to top-left corner (optional)
+- `--title-size` - Title font size in pixels (default: 24)
+- `--title-font` - Path to TTF font file (uses system default if not specified)
+- `--title-color` - Title text color in hex format (default: #FFFFFF)
+- `--title-border` - Title text border/stroke width in pixels (default: 2)
+- `--title-border-color` - Title text border color in hex format (default: #000000)
+- `--title-margin` - Reserve space at the top for the title instead of drawing over the collage
 
 ### Supported Image Formats
 
@@ -86,12 +115,13 @@ collage /path/to/images output.jpg \
 - **Grid layout optimization** - Automatically arranges images based on the canvas dimensions
 - **Sorted processing** - Images are processed in alphabetical order
 - **Flexible sizing** - Auto-calculate dimensions or specify exact width/height
-- **Customizable** - Adjust padding, centering, and background color
+- **Optional title text** - Add customizable title with font, size, color, and border options
+- **Customizable** - Adjust padding, centering, background color, and JPEG quality
 
 ## How It Works
 
 1. Scans the specified folder for all image files
-2. Analyzes the aspect ratios of all images
+2. Analyzes the aspect ratios of random 20 images
 3. Determines the most common aspect ratio (e.g., 16:9, 4:3)
 4. Calculates optimal canvas dimensions based on that ratio
 5. Creates a grid layout that fits all images
