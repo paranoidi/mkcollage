@@ -4,7 +4,13 @@ A simple command-line tool for creating grid collages from a folder of images. A
 
 ## Installation
 
-Install using `uv`:
+Install using [uv](https://docs.astral.sh/uv/getting-started/installation/):
+
+```bash
+uv tool install mkcollage
+```
+
+Git checkout (development):
 
 ```bash
 uv sync
