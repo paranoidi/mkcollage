@@ -1,6 +1,6 @@
 [project]
 name = "mkcollage"
-version = "0.1.0"
+version = "1.0.0"
 description = "A simple grid collage maker for creating image collages from a folder"
 readme = "README.md"
 requires-python = ">=3.8"
